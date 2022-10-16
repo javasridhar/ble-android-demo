@@ -21,6 +21,7 @@ import com.ble.android.demo.adapter.BleDeviceAdapter
 import com.ble.android.demo.api.ApiInterface
 import com.ble.android.demo.model.BtApiData
 import com.ble.android.demo.model.BtDevice
+import com.ble.android.demo.room.BtDatabase
 import com.ble.android.demo.utils.SharedPreference
 import com.ble.android.demo.viewmodel.MainRepository
 import com.ble.android.demo.viewmodel.MainViewModel
@@ -36,6 +37,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var btRecyclerView: RecyclerView
     lateinit var viewModel: MainViewModel
     lateinit var apiInterface: ApiInterface
+    lateinit var btDatabase: BtDatabase
     lateinit var mainRepository: MainRepository
 
     private val BT_PERMISSION_REQUEST_CODE = 1
@@ -51,7 +53,8 @@ class MainActivity : AppCompatActivity() {
         bluetoothAdapter = bluetoothManager.adapter
 
         apiInterface = ApiInterface.getInstance()
-        mainRepository = MainRepository(apiInterface)
+        btDatabase = BtDatabase.getInstance(this.applicationContext)
+        mainRepository = MainRepository(apiInterface, btDatabase)
 
         bleDeviceAdapter = BleDeviceAdapter(this) {
             // Pair and Connect
@@ -61,6 +64,8 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Sending raw data...", Toast.LENGTH_LONG).show()
             val fcmToken = SharedPreference(this).getFcmToken()
             val rawData = BtApiData(rawData = "${it.name},${it.address}", fcmToken = fcmToken)
+
+            viewModel.insertRawData(rawData)
             viewModel.postRawData(rawData)
         }
         btRecyclerView.adapter = bleDeviceAdapter
@@ -73,6 +78,9 @@ class MainActivity : AppCompatActivity() {
         viewModel.errorMessage.observe(this) {
             Toast.makeText(this, "Error=> $it", Toast.LENGTH_LONG).show()
             Log.i(TAG, "Error=> $it")
+        }
+        viewModel.messageOnRoomDB.observe(this) {
+            Log.i(TAG, "RoomDBMessage=> $it")
         }
 
         checkPermissions()

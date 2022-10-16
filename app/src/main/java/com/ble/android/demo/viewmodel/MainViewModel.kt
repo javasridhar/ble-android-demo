@@ -8,8 +8,10 @@ import kotlinx.coroutines.*
 class MainViewModel(private val mainRepository: MainRepository) : ViewModel() {
 
     val errorMessage = MutableLiveData<String>()
+    val messageOnRoomDB = MutableLiveData<String>()
     val btApiData = MutableLiveData<BtApiData>()
     var job: Job? = null
+    var jobRoomDB: Job? = null
 
     val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         errorMessage.value = "Exception on=> ${throwable.localizedMessage}"
@@ -28,8 +30,18 @@ class MainViewModel(private val mainRepository: MainRepository) : ViewModel() {
             }
     }
 
+    fun insertRawData(rawData: BtApiData) {
+        jobRoomDB = CoroutineScope(Dispatchers.IO).launch {
+            mainRepository.insertRawData(rawData)
+            withContext(Dispatchers.Main) {
+                messageOnRoomDB.value = "Raw data inserted=> ${rawData.rawData}"
+            }
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         job?.cancel()
+        jobRoomDB?.cancel()
     }
 }
