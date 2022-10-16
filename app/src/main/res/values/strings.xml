@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">BleAndroidDemo</string>
+    <string name="available_devices">Available Devices</string>
+</resources>
